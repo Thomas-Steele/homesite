@@ -1,0 +1,263 @@
+<html style="overflow:hidden;"> 
+
+	<head> 
+
+		<!-- <header style="font-size:64; justify-self:center;"> Pong! </header> -->
+		
+		<style type="text/css"> 
+		
+			canvas {
+			
+				margin: 24px;
+				border: 12px inset #d7eeff;
+				border-radius: 10px;
+				outline: solid 2px black;
+				background: black;
+				image-rendering: pixelated;
+				
+			}
+			
+			button {
+				
+				color: #978354;
+				border: outset 16px #FFF5DD;
+				border-radius: 32px;
+				outline: solid 2px black;
+				background: #FFE5A8; 
+				size: 50px;
+				box-shadow: 8px 8px 0px 0px rgb(0 0 0 / 0.35);
+				
+			} button:hover {
+				
+				color: white !important;
+				translate: 2px 2px;
+				border: outset 16px #FFA8C1;
+				border-radius: 32px;
+				outline: solid 2px black;
+				background: #FF4D7F; 
+				size: 50px;
+				box-shadow: 6px 6px 0px 0px rgb(0 0 0 / 0.35);
+				
+			} button:active {
+				
+				color: white !important;
+				translate: 4px 4px;
+				border: inset 16px #FFDBE5;
+				border-radius: 32px;
+				outline: solid 2px black;
+				background: #FFA8C1; 
+				size: 50px;
+				box-shadow: 2px 2px 0px 0px rgb(0 0 0 / 0.35);
+				
+			}
+			
+			.buttonTextBorder {
+				
+				display: grid;
+				padding: 6px;
+				border: inset 3px rgb(255 255 255 / 1.0);
+				border-radius: 32px;
+				
+			}
+			
+			.buttonText {
+				
+				color: inherit;
+				font-size: 32px;
+				font-weight: bold;
+				margin: 0px;
+				/*padding: 6px;*/
+				/*border: inset 2px #FFDDFF;*/
+				/*border-radius: 8px;*/
+				filter: drop-shadow(-1px -1px 0px rgb(0 0 0 / 0.5)) drop-shadow(2px 1px 0px rgb(255 255 255 / 0.55));
+				
+			}
+		
+		</style>
+	
+	</head>
+	
+	<body style="background: rgb(140 110 140 / 1.0); margin: 8px; font-family: 'Monospace', Consolas;"> 
+		
+		<div style="margin-left: 16px; margin-right: 16px; border: outset 8px #FFF5DD; border-radius: 16px; outline: solid 2px black; display: grid; background: #FFE5A8; justify-self: center; padding: 4px; box-shadow: 12px 12px 0px 0px rgb(0 0 0 / 0.65)">
+			<p style="translate: 0px -8px; height: calc(1em - 8px); color: grey; margin: 0px; margin-left: 16px; justify-self: end; filter: drop-shadow(-2px -1px 0px black) drop-shadow(2px 1px 0px white); font-size: 48px; font-weight: bold;">WASM Fire Particles</p>
+		</div>
+		
+		<div style="display: flex;">
+			
+			<div style="margin: 16px; border: outset 8px #dcffde; border-radius: 16px; background: #b9ffbe; outline: solid 2px black; display: grid; justify-self: center; padding: 4px; box-shadow: 12px 12px 0px 0px rgb(0 0 0 / 0.65)">
+				<button style="margin: 8px; padding: 12px; padding-left: 32px; padding-right: 32px; font-size: 24px" onclick="main_loop_run()">		   <b class="buttonTextBorder"><p class="buttonText">Run</p></b></button>
+				<button style="margin: 8px; padding: 12px; padding-left: 32px; padding-right: 32px; font-size: 24px" onclick="isRunning = 0;"> 		   <b class="buttonTextBorder"><p class="buttonText">Stop</p></b></button>
+				<button style="margin: 8px; padding: 12px; padding-left: 32px; padding-right: 32px; font-size: 24px" onclick="clearScreen()">  		   <b class="buttonTextBorder"><p class="buttonText">Clear Canvas</p></b></button>
+				<button style="margin: 8px; padding: 12px; padding-left: 32px; padding-right: 32px; font-size: 24px" onclick="drawSquare(64, 64, 32)"> <b class="buttonTextBorder"><p class="buttonText">Draw Square</p></b></button>
+				<button style="margin: 8px; padding: 12px; padding-left: 32px; padding-right: 32px; font-size: 24px" onclick="rescale()">			   <b class="buttonTextBorder"><p class="buttonText">Rescale</p></b></button>
+			</div>
+			
+			<div style="margin: 16px; width: calc(100vw - 350px); border: outset 8px #d7eeff; border-radius: 16px; background: #c1e5ff; outline: solid 2px black; display: grid; justify-content: center; align-content: center; box-shadow: 12px 12px 0px 0px rgb(0 0 0 / 0.65);">
+				<canvas id="app-app"></canvas>
+				<div id="FPSText" style="position: absolute; translate: -16px 24px; margin-bottom: 8px; width: fit-content; border: inset 8px #d7eeff; border-radius: 16px; outline: solid 2px black; justify-self: end; background: black; color: white; font-weight: bold; padding: 8px;">FPS: ...</div>
+			</div>
+			
+			<script type="text/javascript" >
+			
+			
+			function sleep(ms) { return new Promise(resolve => setTimeout(resolve, ms)); }
+			
+			
+			
+			const canv = document.getElementById("app-app");
+			const ctx = canv.getContext("2d");
+			canv.width = 640;
+			canv.height = 400; 
+			//canv.style.width  = '1280px';
+			//canv.style.height = '800px';
+			
+			let scaleSwitch = 1;
+			function rescale() { 
+				if (scaleSwitch == 0) { canv.style.width = "640px"; canv.style.height = "400px"; scaleSwitch = 1; }
+				else { canv.style.width = "1280px"; canv.style.height = "800px"; scaleSwitch = 0; }
+			}
+			
+			const canvasDims = { 
+				width: new WebAssembly.Global({ value: "i32", mutable: false }, canv.width), 
+				height: new WebAssembly.Global({ value: "i32", mutable: false }, canv.height) 
+			};
+			
+			const looperHelper = { 
+				looperHelperValue: new WebAssembly.Global({ value: "i32", mutable: true }, 0), 
+				looperHelperQuit: function lhQuit() { looperHelperValue = 1; }
+			};
+			
+			
+			const inputs = { 
+				up_key: new WebAssembly.Global({ value: "i32", mutable: true }, 0), 
+				down_key: new WebAssembly.Global({ value: "i32", mutable: true }, 0),
+				left_key: new WebAssembly.Global({ value: "i32", mutable: true }, 0),
+				right_key: new WebAssembly.Global({ value: "i32", mutable: true }, 0)
+			};
+			
+			document.addEventListener("keydown", keyDown);
+			document.addEventListener("keyup", keyUp);
+			
+			function keyDown(ev) {
+				
+				if (ev.keyCode == 38) { /*console.log("Up Key Down...");   */ inputs.up_key.value    = 1; }
+				if (ev.keyCode == 40) { /*console.log("Down Key Down..."); */ inputs.down_key.value  = 1; }
+				if (ev.keyCode == 37) { /*console.log("Left Key Down..."); */ inputs.left_key.value  = 1; }
+				if (ev.keyCode == 39) { /*console.log("Right Key Down...");*/ inputs.right_key.value = 1; }
+				
+			}
+			
+			function keyUp(ev) {
+				
+				if (ev.keyCode == 38) { /*console.log("Up Key Up...");   */ inputs.up_key.value    = 0; }
+				if (ev.keyCode == 40) { /*console.log("Down Key Up..."); */ inputs.down_key.value  = 0; }
+				if (ev.keyCode == 37) { /*console.log("Left Key Up..."); */ inputs.left_key.value  = 0; }
+				if (ev.keyCode == 39) { /*console.log("Right Key Up...");*/ inputs.right_key.value = 0; }
+				
+			}
+			
+			
+			let funcs_arr = new Array;
+			let isRunning = 0;
+			
+			const FramesCounted = new WebAssembly.Global({ value: "i32", mutable: true }, 0);
+			const Frames_s = new WebAssembly.Global({ value: "i32", mutable: true }, 0);
+			var testTime = Date.now();
+			function refreshFPS() {
+				document.getElementById("FPSText").textContent=`FPS: ${FramesCounted.value}`;
+			}
+			
+			function gameOver(playerNumber) {
+				console.log("! Game Over !  Player " + `${playerNumber}` + " wins!");
+				isRunning = 0;
+			} const gameOverFunc = { gameOver, };
+			
+			function clearScreen() {
+				funcs_arr[0]();
+			}
+			
+			function drawSquare(x, y, width) {
+				funcs_arr[1](x, y, width);
+			}
+			
+			async function main_loop_run() {
+				isRunning = 1;
+				while (isRunning == 1) {
+					
+					if (Date.now() >= testTime + 1000.0) {
+						testTime = Date.now();
+						Frames_s.value = 1000.0;
+					}
+					
+					//await sleep(8.33333);
+					await sleep(0.0);
+					funcs_arr[2]();
+				}
+				//funcs_arr[2]();
+			}
+			
+			
+			async function startDemo(elementId, wasmPath) {
+				const app = document.getElementById(`app-${elementId}`);
+				if (app === null) {
+					console.error(`Could not find element app-${elementId}. Skipping demo ${wasmPath}...`);
+					return;
+				}
+			
+				/*let paused = true;
+				sec.addEventListener("mouseenter", () => paused = false);
+				sec.addEventListener("mouseleave", () => paused = true);*/
+				
+				function blitBuffer() {
+					/* TODO: Refactor to double-buffer bufferswapping instead of creating a whole new Got Dang buffer object everytime, that's probably not good */
+					const image = new ImageData(new Uint8ClampedArray(image_buffer), canv.width);
+					ctx.putImageData(image, 0, 0);
+				}
+				
+				const w = await WebAssembly.instantiateStreaming(fetch('/WASM/fire_particles.wasm'), { js: { FramesCounted, refreshFPS, Frames_s, blitBuffer, setTimeout }, console, Math, inputs, canvasDims });
+				const PongWASM = w.instance;
+				console.log("Exporting instance of WASM object: ");
+				console.log("[ WASM INSTANCE ]", PongWASM);
+				
+				const image_buffer = new Uint8Array(PongWASM.exports.mem.buffer, 64*1024, canv.height*canv.width*4);
+				const image = new ImageData(new Uint8ClampedArray(image_buffer), canv.width);
+				ctx.putImageData(image, 0, 0);
+				
+				function _clearScreen() {
+				
+					//console.log("Clearing Canvas...");
+					PongWASM.exports.Clear_Screen();
+					blitBuffer();
+					
+				}; funcs_arr.push(_clearScreen);
+				
+				function _drawSquare(x, y, width) {
+					
+					//console.log(`Drawing square...${x}, ${y}, ${width}`);
+					PongWASM.exports.drawSqr(x, y, width);
+					blitBuffer();
+					
+				}; funcs_arr.push(_drawSquare);
+				
+				function _main_loop() {
+					
+					//console.log("Main loop looping...");
+					PongWASM.exports.main_loop();
+					//blitBuffer();
+					
+				}; funcs_arr.push(_main_loop);
+				
+			}
+			
+			startDemo('app', '/WASM/pongWasm.wasm');
+			
+			console.log("Demo started...");
+			
+			</script>
+			
+		</div>
+		
+	</body>
+
+</html>
